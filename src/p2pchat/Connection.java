@@ -6,11 +6,11 @@ import java.io.ObjectOutputStream;
 
 public class Connection {
 
-    private Peer peer;
+    private PeerData peerData;
     private Socket socket;
 
-    public Connection(Peer peer, Socket socket) {
-        this.peer = peer;
+    public Connection(PeerData peerData, Socket socket) {
+        this.peerData = peerData;
         this.socket = socket;
     }
 
@@ -52,7 +52,7 @@ public class Connection {
         }
     }
 
-    public Peer getPeer() {
-        return peer;
+    public PeerData getPeerData() {
+        return peerData;
     }
 }
