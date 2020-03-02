@@ -7,35 +7,17 @@ import java.util.UUID;
 
 public class ChatNode {
 
-    private class PeerHandler extends Thread {
-        private Socket socket;
-
-        public PeerHandler(Socket socket) {
-            this.socket = socket;
-        }
-
-        public PeerHandler(String host, int port) {
-            this.socket = new Socket(host, port);
-        }
-
-        public void run() {
-            Connection conn = new Connection(null, socket);
-            Message msg = conn.receiveMessage();
-            if (msgHandlers.containsKey(msg.getMessageType())) {
-                msgHandlers.get(msg.getMessageType()).handleMessage(conn, msg);
-            }
-            else {
-                System.out.println("That message type is not supported. Please try again.");
-            }
-            conn.close();
-        }
-    }
+    /* MESSAGE TYPES */
+    public static final String JOIN = "JOIN";
+    public static final String EXIT = "EXIT";
+    public static final String CHAT = "CHAT";
+    public static final String LIST = "LIST";
 
     // hash of all peers connected
     private Hashtable<String, PeerData> peers;
 
     // hash of all the message handlers
-    private Hashtable<String, MessageHandler> msgHandlers;
+    private Hashtable<String, MessageHandler> handlers;
 
     // this nodes peer data
     private PeerData currPeerData;
@@ -50,11 +32,14 @@ public class ChatNode {
         if (data.getId() == null) {
             data.setId(data.getHost() + ":" + data.getPort());
         }
-
         this.currPeerData = data;
-        this.peers = new Hashtable<String, PeerData>();
-        this.msgHandlers = new Hashtable<String, MessageHandler>();
         this.isRunning = true;
+
+        this.peers = new Hashtable<String, PeerData>();
+        this.handlers = new Hashtable<String, MessageHandler>();
+
+        handlers.put(JOIN, new JoinHandler());
+
     }
 
     public ChatNode(int port) {
@@ -101,19 +86,15 @@ public class ChatNode {
                     PeerHandler peerHandler = new PeerHandler(clientSocket);
                     peerHandler.start();
                 } catch (Exception e) {
-                    System.out.println("Error accepting client socket.\n" + e)
+                    System.out.println("Error accepting client socket.\n" + e);
                     continue;
                 }
             }
-            serverSocket.close()
+            serverSocket.close();
         } catch (Exception e) {
             System.out.println("Error accepting client socket.\n" + e);
         }
         isRunning = false;
-    }
-
-    public void addMessageHandler(String msgType, MessageHandler msgHandler) {
-        handlers.put(msgType, msgHandler);
     }
 
     public boolean addPeer(PeerData peerData) {
@@ -132,5 +113,26 @@ public class ChatNode {
         return peers.get(key);
     }
 
-    public PEERDATA REMOVEP
+    private class PeerHandler extends Thread {
+        private Socket socket;
+
+        public PeerHandler(Socket socket) {
+            this.socket = socket;
+        }
+
+        public PeerHandler(String host, int port) {
+            this.socket = new Socket(host, port);
+        }
+
+        public void run() {
+            Connection conn = new Connection(null, socket);
+            Message msg = conn.receiveMessage();
+            if (handlers.containsKey(msg.getMessageType())) {
+                handlers.get(msg.getMessageType()).handleMessage(conn, msg);
+            } else {
+                System.out.println("That message type is not supported. Please try again.");
+            }
+            conn.close();
+        }
+    }
 }

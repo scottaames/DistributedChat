@@ -14,6 +14,10 @@ public class Message implements Serializable {
         this.content = content;
     }
 
+    public Message(Socket socket) {
+
+    }
+
     /**
      * @return int
      */
