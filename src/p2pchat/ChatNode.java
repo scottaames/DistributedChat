@@ -38,7 +38,7 @@ public class ChatNode {
     private Hashtable<String, MessageHandler> msgHandlers;
 
     // this nodes peer data
-    private PeerData currData;
+    private PeerData currPeerData;
 
     // node status
     private boolean isRunning;
@@ -51,7 +51,7 @@ public class ChatNode {
             data.setId(data.getHost() + ":" + data.getPort());
         }
 
-        this.currData = data;
+        this.currPeerData = data;
         this.peers = new Hashtable<String, PeerData>();
         this.msgHandlers = new Hashtable<String, MessageHandler>();
         this.isRunning = true;
@@ -78,7 +78,59 @@ public class ChatNode {
         return server;
     }
 
-    public void sendMessage(String toId, String msgType, String msgContent) {
-
+    public void sendMessage(PeerData peer, String msgType, String msgContent) {
+        try {
+            Connection conn = new Connection(peer);
+            Message toSend = new Message(msgType, msgContent);
+            conn.sendMessage(toSend);
+        } catch (Exception e) {
+            System.out.println("Error sending message. See exception:\n");
+        }
     }
+
+    public void mainLoop() {
+        try {
+            ServerSocket serverSocket = makeNodeServer(currPeerData.getPort());
+            serverSocket.setSoTimeout(2000);
+
+            while (isRunning) {
+                try {
+                    Socket clientSocket = serverSocket.accept();
+                    clientSocket.setSoTimeout(0);
+
+                    PeerHandler peerHandler = new PeerHandler(clientSocket);
+                    peerHandler.start();
+                } catch (Exception e) {
+                    System.out.println("Error accepting client socket.\n" + e)
+                    continue;
+                }
+            }
+            serverSocket.close()
+        } catch (Exception e) {
+            System.out.println("Error accepting client socket.\n" + e);
+        }
+        isRunning = false;
+    }
+
+    public void addMessageHandler(String msgType, MessageHandler msgHandler) {
+        handlers.put(msgType, msgHandler);
+    }
+
+    public boolean addPeer(PeerData peerData) {
+        return addPeer(peerData.getId(), peerData);
+    }
+
+    public boolean addPeer(String key, PeerData peerData) {
+        if (!peers.containsKey(key)) {
+            peers.put(key, peerData);
+            return true;
+        }
+        return false;
+    }
+
+    public PeerData getPeer(String key) {
+        return peers.get(key);
+    }
+
+    public PEERDATA REMOVEP
 }
